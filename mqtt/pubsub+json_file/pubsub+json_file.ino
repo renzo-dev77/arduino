@@ -18,7 +18,7 @@
 #include <PubSubClient.h> // install with Library Manager, I used v2.6.0
 #include <ArduinoJson.h>
 #include "certificados.h"
-#include <EEPROM.h>
+
 
 // CREDENCIALES WIFI Y AWS
 
@@ -31,8 +31,8 @@ DynamicJsonBuffer jsonSubBuff;  // Buffer para JSON recibido
 
 
 //NOMBRE DE LOS TOPICOS
-#define IN_TOPIC "LED"
-#define OUT_TOPIC_1 "SERVO"
+#define IN_TOPIC "topico01"
+#define OUT_TOPIC_1 "topico01"
 
 
 void setup() {
@@ -66,31 +66,65 @@ void loop() {
   //CHECKEA CONEXION MQTT CON AWS
   pubSubCheckConnect();
   
-  if (millis() - lastPublish > 10000) {
-    msgCount++;
-    //CONSTRUYE NUEVO JSON
-    payload1["estado"]= 0;
-    payload1["PWM"]= 511;
-    payload1["number"]=msgCount;
-    
-    // CAMBIA EL FORMATO DEL PAYLOAD
-    String sPayload;
-    char* cPayload;    
-    sPayload = "";
-    payload1.printTo(sPayload);
-    cPayload = &sPayload[0u]; 
-  
-    //PUBLISH TOPIC        
-    //String msg = String("{\nHello from ESP8266: \n}\n"); //+ ++msgCount;
-    boolean rc = pubSubClient.publish(OUT_TOPIC_1, cPayload);
-    Serial.print("Published, rc="); Serial.print( (rc ? "OK: " : "FAILED: ") );
-    Serial.println(cPayload);
+  if (millis() - lastPublish > 120000) {
+
+    input();
+
     lastPublish = millis();
     }
 
   
 }
 
+  
+void input(){
+/*
+ ********************************************************
+ ********************************************************
+ESCRIBIR ACA SU CODIGO PARA OBTENER VALORES DE LOS INPUTS
+*********************************************************
+*********************************************************
+*/
+  msgCount++;
+  //CONSTRUYE NUEVO JSON
+  payload1["estado"]= 0;
+  payload1["PWM"]= 511;
+  payload1["valor01"]=msgCount;
+  payload1["valor02"]=msgCount;
+  payload1["rgb_red"]=msgCount;
+  payload1["rgb_green"]=msgCount;
+  payload1["rgb_blue"]=msgCount;
+  
+  // CAMBIA EL FORMATO DEL PAYLOAD
+  String sPayload;
+  char* cPayload;    
+  sPayload = "";
+  payload1.printTo(sPayload);
+  cPayload = &sPayload[0u]; 
+  
+  //PUBLISH TOPIC        
+  //String msg = String("{\nHello from ESP8266: \n}\n"); //+ ++msgCount;
+  boolean rc = pubSubClient.publish(OUT_TOPIC_1, cPayload);
+  Serial.print("Published, rc="); Serial.print( (rc ? "OK: " : "FAILED: ") );
+  Serial.println(cPayload);
+  }
+
+void output(int estado, int pwm, int valor1, int valor2, int rojo, int verde, int azul){
+  /*
+  ********************************************************
+  ********************************************************
+  ESCRIBIR ACA SU CODIGO PARA OBTENER VALORES DE LOS INPUTS
+  *********************************************************
+  *********************************************************
+    //POR EJEMPLO:
+    if (estado==1){
+      Serial.println("BOTON PRESIONADO DESDE INTERNET");
+      }
+    else{
+      Serial.println("nada ha pasado aun");
+      }
+      */
+  }
 
 void msgReceived(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message received on "); Serial.print(topic); Serial.print(": ");
@@ -98,6 +132,22 @@ void msgReceived(char* topic, byte* payload, unsigned int length) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
+  
+  // DEFINICION DEL JSON QUE SE RECIBE
+  JsonObject& jsonReceived = jsonSubBuff.parseObject(payload);
+
+  // ASIGNA VARIABLES LOCALES A LOS CAMPOS DEL JSON RECIBIDO
+  int estado = jsonReceived["estado"];
+  int pwm = jsonReceived["pwm"];
+  int val01 = jsonReceived["val01"];
+  int val02 = jsonReceived["val02"];
+  int rgb_rojo = jsonReceived["rgb_red"];
+  int rgb_verde = jsonReceived["rgb_green"];
+  int rgb_azul = jsonReceived["rgb_blue"];
+
+  //FUNCION PARA PROGRAMAR LAS SALIDAS
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  output(estado,pwm,val01,val02,rgb_rojo,rgb_verde,rgb_azul);
 }
 
 //CONECION CON EL SERVIDOR (AWS)
